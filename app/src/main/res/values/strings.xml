@@ -1,0 +1,46 @@
+<resources>
+    <string name="app_name">CERTIFICATE</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="error_invalid_domain">Введите корректный домен (например, google.com)</string>
+    <string name="error_no_internet">Нет подключения к интернету</string>
+    <string name="error_with_message">Ошибка: %1$s</string>
+    <string name="error_unknown">Неизвестная ошибка</string>
+    <string name="button_get">GET</string>
+    <string name="button_retry">Повторить</string>
+    <string name="share_certificate_title">Поделиться сертификатом</string>
+
+    <string name="cert_subject">🔒 Сертификат для: </string>
+    <string name="cert_issuer">👤 Издатель: </string>
+    <string name="cert_serial_number">🆔 Серийный номер: </string>
+    <string name="cert_version">📄 Версия: </string>
+    <string name="cert_signature_algorithm">✍️ Алгоритм подписи: </string>
+    <string name="cert_fingerprint">Отпечаток подписи: </string>
+    <string name="error_fingerprint">Ошибка получения отпечатка подписи</string>
+
+    <string name="cert_validity_period">🗓 Срок действия: </string>
+    <string name="cert_valid_from">• С: </string>
+    <string name="cert_valid_to">• До: </string>
+
+    <string name="button_share">Поделиться</string>
+    <string name="share_hint">Поделиться сертификатом</string>
+
+
+
+
+
+
+
+    <string name="share_certificate_text">
+    Сертификат для: %1$s
+    Издатель: %2$s
+    Серийный номер: %3$s
+    Версия: %4$d
+    Подпись: %5$s
+    Срок действия:
+    • С: %6$s
+    • До: %7$s
+</string>
+
+
+
+</resources>
