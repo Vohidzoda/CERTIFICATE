@@ -15,18 +15,18 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.TextView
-import android.widget.Toast
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.example.certificate.R
+import com.example.certificate.presentation.state.CertificateUiState
 import com.example.certificate.presentation.viewModel.CertificateViewModel
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
 
 @AndroidEntryPoint
 class CertificateFragment : Fragment(R.layout.fragment_certificate) {
@@ -45,23 +45,13 @@ class CertificateFragment : Fragment(R.layout.fragment_certificate) {
 
         getButton.setOnClickListener {
             val input = editText.text?.toString() ?: ""
-
-            if (getButton.text == getString(R.string.button_retry)) {
-                if (isInternetAvailable()) {
-                    viewModel.retryLastRequest(requireContext())
-                    getButton.text = getString(R.string.button_get)
-                } else {
-                    Toast.makeText(requireContext(),
-                        getString(R.string.error_no_internet),
-                        Toast.LENGTH_SHORT).show()
-                }
-            } else {
-                viewModel.fetchCertificate(input, requireContext())
-            }
+            viewModel.fetchCertificate(input)
         }
 
         shareButton.setOnClickListener {
-            viewModel.certificateInfo.value?.let { cert ->
+            val state = viewModel.uiState.value
+            if (state is CertificateUiState.Success) {
+                val cert = state.data
                 val shareText = getString(
                     R.string.share_certificate_text,
                     cert.subject,
@@ -80,12 +70,6 @@ class CertificateFragment : Fragment(R.layout.fragment_certificate) {
             }
         }
 
-        lifecycleScope.launchWhenStarted {
-            viewModel.hideKeyboardEvent.collect {
-                hideKeyboard()
-            }
-        }
-
         editText.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 viewModel.onOkButtonClicked()
@@ -94,56 +78,64 @@ class CertificateFragment : Fragment(R.layout.fragment_certificate) {
         }
 
         lifecycleScope.launchWhenStarted {
-            viewModel.certificateInfo.combine(viewModel.signatureFingerprint) { cert, fingerprint ->
-                Pair(cert, fingerprint)
-            }.collectLatest { (cert, fingerprint) ->
-                if (cert != null) {
-                    val context = requireContext()
-                    val redColor = ContextCompat.getColor(context, R.color.red)
-                    val builder = SpannableStringBuilder()
+            viewModel.hideKeyboardEvent.collect {
+                hideKeyboard()
+            }
+        }
 
-                    fun appendLabelValue(label: String, value: String) {
-                        val start = builder.length
-                        builder.append(label)
-                        builder.setSpan(
-                            ForegroundColorSpan(redColor),
-                            start,
-                            start + label.length,
-                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                        )
-                        builder.append(value)
-                        builder.append("\n")
+        lifecycleScope.launchWhenStarted {
+            viewModel.uiState.collectLatest { state ->
+                when (state) {
+                    is CertificateUiState.Loading -> {
+                        progressBar.isVisible = true
+                        textView.text = ""
+                        getButton.text = getString(R.string.button_get)
                     }
+                    is CertificateUiState.Success -> {
+                        progressBar.isVisible = false
+                        val cert = state.data
+                        val fingerprint = state.fingerprint ?: "—"
+                        val context = requireContext()
+                        val redColor = ContextCompat.getColor(context, R.color.red)
+                        val builder = SpannableStringBuilder()
 
-                    appendLabelValue(resources.getString(R.string.cert_subject), cert.subject)
-                    appendLabelValue(resources.getString(R.string.cert_issuer), cert.issuer)
-                    appendLabelValue(resources.getString(R.string.cert_serial_number), cert.serialNumber)
-                    appendLabelValue(resources.getString(R.string.cert_version), cert.version.toString())
-                    appendLabelValue(resources.getString(R.string.cert_signature_algorithm), cert.signatureAlgorithm)
-                    appendLabelValue(resources.getString(R.string.cert_fingerprint), fingerprint ?: "—")
-                    appendLabelValue(resources.getString(R.string.cert_validity_period), "")
-                    appendLabelValue(resources.getString(R.string.cert_valid_from), viewModel.formatDate(cert.validFrom))
-                    appendLabelValue(resources.getString(R.string.cert_valid_to), viewModel.formatDate(cert.validTo))
+                        fun appendLabelValue(label: String, value: String) {
+                            val start = builder.length
+                            builder.append(label)
+                            builder.setSpan(
+                                ForegroundColorSpan(redColor),
+                                start,
+                                start + label.length,
+                                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                            )
+                            builder.append(value)
+                            builder.append("\n")
+                        }
 
-                    textView.text = builder
+                        appendLabelValue(getString(R.string.cert_subject), cert.subject)
+                        appendLabelValue(getString(R.string.cert_issuer), cert.issuer)
+                        appendLabelValue(getString(R.string.cert_serial_number), cert.serialNumber)
+                        appendLabelValue(getString(R.string.cert_version), cert.version.toString())
+                        appendLabelValue(getString(R.string.cert_signature_algorithm), cert.signatureAlgorithm)
+                        appendLabelValue(getString(R.string.cert_fingerprint), fingerprint)
+                        appendLabelValue(getString(R.string.cert_validity_period), "")
+                        appendLabelValue(getString(R.string.cert_valid_from), viewModel.formatDate(cert.validFrom))
+                        appendLabelValue(getString(R.string.cert_valid_to), viewModel.formatDate(cert.validTo))
+
+                        textView.text = builder
+                        getButton.text = getString(R.string.button_get)
+                    }
+                    is CertificateUiState.Error -> {
+                        progressBar.isVisible = false
+                        textView.text = state.message
+                        getButton.text = getString(R.string.button_retry)
+                    }
+                    is CertificateUiState.Idle -> {
+                        progressBar.isVisible = false
+                        textView.text = ""
+                        getButton.text = getString(R.string.button_get)
+                    }
                 }
-            }
-        }
-
-        lifecycleScope.launchWhenStarted {
-            viewModel.error.collectLatest { error ->
-                if (error != null) {
-                    textView.text = error
-                    getButton.text = getString(R.string.button_retry)
-                } else {
-                    getButton.text = getString(R.string.button_get)
-                }
-            }
-        }
-
-        lifecycleScope.launchWhenStarted {
-            viewModel.loading.collectLatest { isLoading ->
-                progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
             }
         }
 
@@ -154,9 +146,6 @@ class CertificateFragment : Fragment(R.layout.fragment_certificate) {
         connectivityManager = requireContext().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
         networkCallback = object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: Network) {
-            }
-
             override fun onLost(network: Network) {
                 requireActivity().runOnUiThread {
                     getButton.text = getString(R.string.button_retry)
@@ -168,13 +157,6 @@ class CertificateFragment : Fragment(R.layout.fragment_certificate) {
         connectivityManager.registerNetworkCallback(request, networkCallback)
     }
 
-    private fun isInternetAvailable(): Boolean {
-        val cm = requireContext().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val network = cm.activeNetwork ?: return false
-        val capabilities = cm.getNetworkCapabilities(network) ?: return false
-        return capabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET)
-    }
-
     override fun onDestroyView() {
         super.onDestroyView()
         if (::connectivityManager.isInitialized && ::networkCallback.isInitialized) {
@@ -183,7 +165,7 @@ class CertificateFragment : Fragment(R.layout.fragment_certificate) {
     }
 
     private fun hideKeyboard() {
-        val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        val imm = requireContext().getSystemService(InputMethodManager::class.java)
         val view = requireActivity().currentFocus ?: View(requireContext())
         imm.hideSoftInputFromWindow(view.windowToken, 0)
     }

@@ -23,6 +23,7 @@
             android:layout_weight="1"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
+            app:endIconMode="clear_text"
             app:prefixText="https://">
 
             <com.google.android.material.textfield.TextInputEditText

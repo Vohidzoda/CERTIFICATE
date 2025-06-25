@@ -10,7 +10,6 @@ class ResourceProviderImpl @Inject constructor(
 ): ResourceProvider {
 
     override fun getString(id: Int): String = context.getString(id)
-
     override fun getString(id: Int, vararg args: Any): String = context.getString(id, *args)
 
 }

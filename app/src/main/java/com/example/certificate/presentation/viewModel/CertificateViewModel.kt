@@ -8,7 +8,9 @@ import androidx.annotation.RequiresPermission
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.certificate.R
+import com.example.certificate.presentation.state.CertificateUiState
 import com.example.domain.model.CertificateInfo
+import com.example.domain.repository.NetworkChecker
 import com.example.domain.repository.ResourceProvider
 import com.example.domain.usecase.GetSSLCertificateUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,111 +28,81 @@ import javax.inject.Inject
 @HiltViewModel
 class CertificateViewModel @Inject constructor(
     private val getSSLCertificateUseCase: GetSSLCertificateUseCase,
-    private val resourceProvider: ResourceProvider
+    private val resourceProvider: ResourceProvider,
+    private val networkChecker: NetworkChecker
 ) : ViewModel() {
 
     private val _hideKeyboardEvent = MutableSharedFlow<Unit>()
     val hideKeyboardEvent = _hideKeyboardEvent.asSharedFlow()
 
-    private val _certificateInfo = MutableStateFlow<CertificateInfo?>(null)
-    val certificateInfo: StateFlow<CertificateInfo?> = _certificateInfo
+    private val _uiState = MutableStateFlow<CertificateUiState>(CertificateUiState.Idle)
+    val uiState: StateFlow<CertificateUiState> = _uiState
 
-    private val _signatureFingerprint = MutableStateFlow<String?>(null)
-    val signatureFingerprint: StateFlow<String?> = _signatureFingerprint
-
-    private val _loading = MutableStateFlow(false)
-    val loading: StateFlow<Boolean> = _loading
-
-    private val _error = MutableStateFlow<String?>(null)
-    val error: StateFlow<String?> = _error
-
-    private var lastDomainInput: String? = null
-
-    fun fetchCertificate(input: String, context: Context) {
+    fun fetchCertificate(input: String) {
         val domain = normalizeDomain(input)
-        lastDomainInput = input
 
         if (domain.isEmpty()) {
-            _error.value = resourceProvider.getString(R.string.error_invalid_domain)
+            _uiState.value = CertificateUiState.Error(
+                resourceProvider.getString(R.string.error_invalid_domain))
             return
         }
 
-        if (!isInternetAvailable(context)) {
-            _error.value = resourceProvider.getString(R.string.error_no_internet)
+        if (!networkChecker.isConnected()) {
+            _uiState.value = CertificateUiState.Error(
+                resourceProvider.getString(R.string.error_no_internet))
             return
         }
 
         viewModelScope.launch {
-            _loading.value = true
+            _uiState.value = CertificateUiState.Loading
             try {
-                val info = getSSLCertificateUseCase(domain)
-                _certificateInfo.value = info
-                _error.value = null
-
-                _signatureFingerprint.value = getSignatureSha256Fingerprint(info.certificate)
-
+                val cert = getSSLCertificateUseCase(domain)
+                val fingerprint = getSignatureSha256Fingerprint(cert.certificate)
+                _uiState.value = CertificateUiState.Success(cert, fingerprint)
             } catch (e: Exception) {
-                val errorMsg = e.message?.ifBlank { null }
-                _error.value = resourceProvider.getString(
-                    R.string.error_with_message,
-                    errorMsg ?: resourceProvider.getString(R.string.error_unknown)
+                val msg = e.message?.ifBlank { null }
+
+                _uiState.value = CertificateUiState.Error(
+                    resourceProvider.getString(
+                        R.string.error_with_message, msg ?: resourceProvider.getString(
+                            R.string.error_unknown))
                 )
-            } finally {
-                _loading.value = false
             }
         }
-    }
-
-    fun retryLastRequest(context: Context) {
-        lastDomainInput?.let {
-            fetchCertificate(it, context)
-        }
-    }
-
-    private fun normalizeDomain(input: String): String {
-        val clean = input
-            .replace("https://", "", ignoreCase = true)
-            .replace("http://", "", ignoreCase = true)
-            .trim()
-            .split("/")[0]
-
-        val regex = Regex("^[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
-        return if (regex.matches(clean)) clean else ""
-    }
-
-    fun formatDate(dateString: String): String {
-        return try {
-            val inputFormat = SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.ENGLISH)
-            val outputFormat = SimpleDateFormat("dd MMMM yyyy, HH:mm", Locale("ru"))
-            val date = inputFormat.parse(dateString)
-            outputFormat.format(date ?: return dateString)
-        } catch (e: Exception) {
-            dateString
-        }
-    }
-
-    fun getSignatureSha256Fingerprint(certificate: X509Certificate): String {
-        return try {
-            val signatureBytes = certificate.signature
-            val digest = MessageDigest.getInstance("SHA-256")
-            val hashBytes = digest.digest(signatureBytes)
-            hashBytes.joinToString(":") { "%02X".format(it) }
-        } catch (e: Exception) {
-            resourceProvider.getString(R.string.error_fingerprint)
-        }
-    }
-
-    @RequiresPermission(Manifest.permission.ACCESS_NETWORK_STATE)
-    fun isInternetAvailable(context: Context): Boolean {
-        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val network = cm.activeNetwork ?: return false
-        val capabilities = cm.getNetworkCapabilities(network) ?: return false
-        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 
     fun onOkButtonClicked() {
         viewModelScope.launch {
             _hideKeyboardEvent.emit(Unit)
         }
+    }
+
+    fun formatDate(dateString: String): String {
+        return try {
+            val inputFormat = SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.ENGLISH)
+            val outputFormat = SimpleDateFormat("dd MMMM yyyy, HH:mm", Locale("ru"))
+            outputFormat.format(inputFormat.parse(dateString) ?: return dateString)
+        } catch (e: Exception) {
+            dateString
+        }
+    }
+
+    fun getSignatureSha256Fingerprint(cert: X509Certificate): String {
+        return try {
+            val digest = MessageDigest.getInstance("SHA-256")
+            val hash = digest.digest(cert.signature)
+            hash.joinToString(":") { "%02X".format(it) }
+        } catch (e: Exception) {
+            resourceProvider.getString(R.string.error_fingerprint)
+        }
+    }
+
+    private fun normalizeDomain(input: String): String {
+        val clean = input.replace("https://", "", ignoreCase = true)
+            .replace("http://", "", ignoreCase = true)
+            .trim()
+            .split("/")[0]
+        val regex = Regex("^[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
+        return if (regex.matches(clean)) clean else ""
     }
 }
