@@ -5,6 +5,9 @@
     <color name="red">#D32F2F</color>
     <color name="status_bar_color">@color/white</color>
     <color name="colorIcon">@color/black</color>
+    <color name="start_date_color">#4CAF50</color>
+    <color name="end_date_color">#F44336</color>
+
 
 
 </resources>

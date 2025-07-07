@@ -32,19 +32,25 @@ class CertificateRepositoryImpl : ICertificateRepository {
             socket.connect(InetSocketAddress(host, port), 5000)
             socket.startHandshake()
 
-            val cert = socket.session.peerCertificates.first() as X509Certificate
+            val certs = socket.session.peerCertificates
+                .filterIsInstance<X509Certificate>()
+
+            val pins = certs.map { getCertificatePin(it) }
+
+            val firstCert = certs.first()
             socket.close()
 
             SSLCertificateInfo(
                 domain = host,
-                subject = cert.subjectDN.name,
-                issuer = cert.issuerDN.name,
-                validFrom = cert.notBefore.toString(),
-                validTo = cert.notAfter.toString(),
-                sha256Pin = getCertificatePin(cert)
+                subject = firstCert.subjectDN.name,
+                issuer = firstCert.issuerDN.name,
+                validFrom = firstCert.notBefore.toString(),
+                validTo = firstCert.notAfter.toString(),
+                sha256 = pins
             )
         }
     }
+
 
     private fun parseHostAndPort(input: String): Pair<String, Int> {
         val parts = input.split(":")
@@ -62,7 +68,7 @@ class CertificateRepositoryImpl : ICertificateRepository {
         val md = MessageDigest.getInstance("SHA-256")
         val publicKey = cert.publicKey.encoded
         val sha256 = md.digest(publicKey)
-        return "sha256/" + Base64.encodeToString(sha256, Base64.NO_WRAP)
+        return Base64.encodeToString(sha256, Base64.NO_WRAP)
     }
 
     private fun normalizeDomain(input: String): String {

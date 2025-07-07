@@ -73,12 +73,13 @@ class CertificateViewModel @Inject constructor(
     fun formatDate(dateString: String): String {
         return try {
             val inputFormat = SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.ENGLISH)
-            val outputFormat = SimpleDateFormat("dd MMMM yyyy, HH:mm", Locale("ru"))
+            val outputFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
             outputFormat.format(inputFormat.parse(dateString) ?: return dateString)
         } catch (e: Exception) {
             dateString
         }
     }
+
 
     private fun normalizeDomain(input: String): String {
         val clean = input

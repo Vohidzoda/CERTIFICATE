@@ -7,5 +7,5 @@ data class SSLCertificateInfo(
     val issuer: String,
     val validFrom: String,
     val validTo: String,
-    val sha256Pin: String
+    val sha256: List<String>
 )
