@@ -9,6 +9,12 @@
     <string name="button_retry">Повторить</string>
     <string name="share_certificate_title">Поделиться сертификатом</string>
 
+    <string name="cert_base64_fingerprint">📝 Base64-отпечаток:</string>
+    <string name="fingerprint_copied">Отпечаток скопирован</string>
+    <string name="error_base64_fingerprint">Ошибка при создании Base64 отпечатка</string>
+
+
+
     <string name="cert_subject">🔒 Сертификат для: </string>
     <string name="cert_issuer">👤 Издатель: </string>
     <string name="cert_serial_number">🆔 Серийный номер: </string>
@@ -23,6 +29,7 @@
 
     <string name="button_share">Поделиться</string>
     <string name="share_hint">Поделиться сертификатом</string>
+    <string name="cert_sha256_pin">SHA-256 Pin</string>
 
 
 
@@ -33,13 +40,12 @@
     <string name="share_certificate_text">
     Сертификат для: %1$s
     Издатель: %2$s
-    Серийный номер: %3$s
-    Версия: %4$d
-    Подпись: %5$s
     Срок действия:
-    • С: %6$s
-    • До: %7$s
+    • С: %3$s
+    • До: %4$s
+    SHA-256 Pin: %5$s
 </string>
+
 
 
 

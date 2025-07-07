@@ -1,15 +1,9 @@
 package com.example.certificate.presentation.viewModel
 
-import android.Manifest
-import android.content.Context
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
-import androidx.annotation.RequiresPermission
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.certificate.R
 import com.example.certificate.presentation.state.CertificateUiState
-import com.example.domain.model.CertificateInfo
 import com.example.domain.repository.NetworkChecker
 import com.example.domain.repository.ResourceProvider
 import com.example.domain.usecase.GetSSLCertificateUseCase
@@ -57,8 +51,7 @@ class CertificateViewModel @Inject constructor(
             _uiState.value = CertificateUiState.Loading
             try {
                 val cert = getSSLCertificateUseCase(domain)
-                val fingerprint = getSignatureSha256Fingerprint(cert.certificate)
-                _uiState.value = CertificateUiState.Success(cert, fingerprint)
+                _uiState.value = CertificateUiState.Success(cert)
             } catch (e: Exception) {
                 val msg = e.message?.ifBlank { null }
 
@@ -87,22 +80,17 @@ class CertificateViewModel @Inject constructor(
         }
     }
 
-    fun getSignatureSha256Fingerprint(cert: X509Certificate): String {
-        return try {
-            val digest = MessageDigest.getInstance("SHA-256")
-            val hash = digest.digest(cert.signature)
-            hash.joinToString(":") { "%02X".format(it) }
-        } catch (e: Exception) {
-            resourceProvider.getString(R.string.error_fingerprint)
-        }
-    }
-
     private fun normalizeDomain(input: String): String {
-        val clean = input.replace("https://", "", ignoreCase = true)
+        val clean = input
+            .replace("https://", "", ignoreCase = true)
             .replace("http://", "", ignoreCase = true)
             .trim()
             .split("/")[0]
+
+        val host = clean.split(":")[0]
+
         val regex = Regex("^[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
-        return if (regex.matches(clean)) clean else ""
+        return if (regex.matches(host)) clean else ""
     }
+
 }

@@ -1,8 +1,7 @@
 package com.example.domain.repository
 
-import com.example.domain.model.CertificateInfo
+import com.example.domain.model.SSLCertificateInfo
 
 interface ICertificateRepository {
-
-    suspend fun getCertificateInfo(domain: String): CertificateInfo
+    suspend fun getSSLCertificate(domain: String): SSLCertificateInfo
 }
