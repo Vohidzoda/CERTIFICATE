@@ -24,12 +24,16 @@
     <string name="error_fingerprint">Ошибка получения отпечатка подписи</string>
 
     <string name="cert_validity_period">🗓 Срок действия: </string>
-    <string name="cert_valid_from">• С: </string>
-    <string name="cert_valid_to">• До: </string>
+    <string name="cert_valid_from">С: %1$s</string>
+    <string name="cert_valid_to">До: %1$s</string>
 
     <string name="button_share">Поделиться</string>
     <string name="share_hint">Поделиться сертификатом</string>
-    <string name="cert_sha256_pin">SHA-256 Pin</string>
+    <string name="cert_sha256_pin">SHA-256</string>
+    <string name="copied_toast">Скопировано: %1$s</string>
+    <string name="label_clipboard_title">Текст для копирования</string>
+
+
 
 
 

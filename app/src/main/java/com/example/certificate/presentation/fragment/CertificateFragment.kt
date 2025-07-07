@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.certificate.R
 import com.example.certificate.presentation.adapter.CertificateDetailAdapter
+import com.example.certificate.presentation.model.CertificateKeyDetail
 import com.example.certificate.presentation.state.CertificateUiState
 import com.example.certificate.presentation.viewModel.CertificateViewModel
 import com.google.android.material.button.MaterialButton
@@ -95,13 +96,32 @@ class CertificateFragment : Fragment(R.layout.fragment_certificate) {
 
                         val cert = state.data
 
-                        val displayList = listOf(
-                            getString(R.string.cert_subject) to cert.subject,
-                            getString(R.string.cert_issuer) to cert.issuer,
-                            getString(R.string.cert_valid_from) to viewModel.formatDate(cert.validFrom),
-                            getString(R.string.cert_valid_to) to viewModel.formatDate(cert.validTo),
-                            getString(R.string.cert_sha256_pin) to cert.sha256Pin
+                        // Формируем список CertificateKeyDetail
+                        val sha256Details = cert.sha256.map { key ->
+                            CertificateKeyDetail(
+                                title = getString(R.string.cert_sha256_pin),
+                                value = key,
+                                startDate = viewModel.formatDate(cert.validFrom),
+                                endDate = viewModel.formatDate(cert.validTo)
+                            )
+                        }
+
+                        val otherDetails = listOf(
+                            CertificateKeyDetail(
+                                title = getString(R.string.cert_subject),
+                                value = cert.subject,
+                                startDate = "",
+                                endDate = ""
+                            ),
+                            CertificateKeyDetail(
+                                title = getString(R.string.cert_issuer),
+                                value = cert.issuer,
+                                startDate = "",
+                                endDate = ""
+                            )
                         )
+
+                        val displayList = otherDetails + sha256Details
 
                         adapter.updateData(displayList)
                         getButton.text = getString(R.string.button_get)
@@ -121,7 +141,6 @@ class CertificateFragment : Fragment(R.layout.fragment_certificate) {
             }
         }
     }
-
 
     private fun observeKeyboardAndNetwork(view: View) {
         val getButton = view.findViewById<Button>(R.id.getButton)
@@ -145,7 +164,7 @@ class CertificateFragment : Fragment(R.layout.fragment_certificate) {
                 cert.issuer,
                 viewModel.formatDate(cert.validFrom),
                 viewModel.formatDate(cert.validTo),
-                cert.sha256Pin
+                cert.sha256.joinToString(separator = "\n")
             )
 
             val intent = Intent(Intent.ACTION_SEND).apply {
@@ -157,7 +176,6 @@ class CertificateFragment : Fragment(R.layout.fragment_certificate) {
             Toast.makeText(requireContext(), "Нет данных для шаринга", Toast.LENGTH_SHORT).show()
         }
     }
-
 
     private fun observeNetwork(getButton: Button) {
         connectivityManager = requireContext().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -187,4 +205,3 @@ class CertificateFragment : Fragment(R.layout.fragment_certificate) {
         imm.hideSoftInputFromWindow(view.windowToken, 0)
     }
 }
-
