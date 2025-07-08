@@ -1,9 +1,12 @@
 package com.example.certificate.di
 
 import android.content.Context
+import android.net.ConnectivityManager
+import com.example.data.network.NetworkObserverImpl
 import com.example.data.repository.CertificateRepositoryImpl
 import com.example.data.repository.NetworkCheckerImpl
 import com.example.data.repository.ResourceProviderImpl
+import com.example.domain.network.NetworkObserver
 import com.example.domain.repository.ICertificateRepository
 import com.example.domain.repository.NetworkChecker
 import com.example.domain.repository.ResourceProvider
@@ -41,6 +44,21 @@ object AppModule {
     @Singleton
     fun provideNetworkChecker(@ApplicationContext context: Context): NetworkChecker {
         return NetworkCheckerImpl(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideConnectivityManager(@ApplicationContext context: Context): ConnectivityManager {
+        return context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+
+    }
+
+    @Provides
+    @Singleton
+    fun provideNetworkObserver(
+        connectivityManager: ConnectivityManager
+    ): NetworkObserver {
+        return NetworkObserverImpl(connectivityManager)
     }
 
 }
