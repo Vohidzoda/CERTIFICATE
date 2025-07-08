@@ -3,9 +3,8 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="error_invalid_domain">Введите корректный домен (например, google.com)</string>
     <string name="error_no_internet">Нет подключения к интернету</string>
-    <string name="error_with_message">Ошибка: %1$s</string>
     <string name="error_unknown">Неизвестная ошибка</string>
-    <string name="button_get">GET</string>
+    <string name="button_get">Получить</string>
     <string name="button_retry">Повторить</string>
     <string name="share_certificate_title">Поделиться сертификатом</string>
 
@@ -15,8 +14,11 @@
 
 
 
-    <string name="cert_subject">🔒 Сертификат для: </string>
-    <string name="cert_issuer">👤 Издатель: </string>
+
+    <string name="cert_subject">🔒 Сертификат для: %1$s</string>
+    <string name="cert_issuer">👤 Издатель: %1$s</string>
+    <string name="cert_sha256_pin">SHA-256: %1$s</string>
+
     <string name="cert_serial_number">🆔 Серийный номер: </string>
     <string name="cert_version">📄 Версия: </string>
     <string name="cert_signature_algorithm">✍️ Алгоритм подписи: </string>
@@ -29,9 +31,21 @@
 
     <string name="button_share">Поделиться</string>
     <string name="share_hint">Поделиться сертификатом</string>
-    <string name="cert_sha256_pin">SHA-256</string>
-    <string name="copied_toast">Скопировано: %1$s</string>
+    <string name="copied_toast">🔑SHA-256: скопировано: %1$s</string>
     <string name="label_clipboard_title">Текст для копирования</string>
+    <string name="no_data_to_share">Нет данных для шаринга</string>
+
+    <string name="cert_subject_issuer">Subject: %1$s\nIssuer: %2$s</string>
+
+    <string name="cert_subject_label">🔒Сертификат для:</string>
+    <string name="cert_issuer_label">👤Издатель:</string>
+    <string name="cert_sha256_label">🔑SHA-256:</string>
+
+
+
+
+
+
 
 
 
@@ -49,7 +63,10 @@
     • До: %4$s
     SHA-256 Pin: %5$s
 </string>
-
+    <string name="startDate">Start</string>
+    <string name="endDate">End</string>
+    <string name="url">URL</string>
+    <string name="get">Получить</string>
 
 
 

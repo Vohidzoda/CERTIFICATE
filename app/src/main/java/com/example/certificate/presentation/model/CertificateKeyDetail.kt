@@ -4,5 +4,7 @@ data class CertificateKeyDetail(
     val title: String,
     val value: String,
     val startDate: String,
-    val endDate: String
+    val endDate: String,
+    val issuer: String,
+    val sha256: String
 )

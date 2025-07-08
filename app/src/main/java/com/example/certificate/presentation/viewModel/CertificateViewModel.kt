@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.certificate.R
 import com.example.certificate.presentation.state.CertificateUiState
+import com.example.certificate.presentation.util.CertificateUtils
 import com.example.domain.repository.NetworkChecker
 import com.example.domain.repository.ResourceProvider
 import com.example.domain.usecase.GetSSLCertificateUseCase
@@ -13,10 +14,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
-import java.security.MessageDigest
-import java.security.cert.X509Certificate
-import java.text.SimpleDateFormat
-import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
@@ -33,7 +30,7 @@ class CertificateViewModel @Inject constructor(
     val uiState: StateFlow<CertificateUiState> = _uiState
 
     fun fetchCertificate(input: String) {
-        val domain = normalizeDomain(input)
+        val domain = CertificateUtils.normalizeDomain(input)
 
         if (domain.isEmpty()) {
             _uiState.value = CertificateUiState.Error(
@@ -51,14 +48,24 @@ class CertificateViewModel @Inject constructor(
             _uiState.value = CertificateUiState.Loading
             try {
                 val cert = getSSLCertificateUseCase(domain)
-                _uiState.value = CertificateUiState.Success(cert)
+
+                val formattedCert = cert.copy(
+                    certificates = cert.certificates.map { entry ->
+                        entry.copy(
+                            validFrom = CertificateUtils.formatDate(entry.validFrom),
+                            validTo = CertificateUtils.formatDate(entry.validTo)
+                        )
+                    }
+                )
+
+                _uiState.value = CertificateUiState.Success(formattedCert)
             } catch (e: Exception) {
                 val msg = e.message?.ifBlank { null }
-
                 _uiState.value = CertificateUiState.Error(
                     resourceProvider.getString(
-                        R.string.error_with_message, msg ?: resourceProvider.getString(
-                            R.string.error_unknown))
+                        R.string.error_invalid_domain,
+                        msg ?: resourceProvider.getString(R.string.error_unknown)
+                    )
                 )
             }
         }
@@ -69,29 +76,4 @@ class CertificateViewModel @Inject constructor(
             _hideKeyboardEvent.emit(Unit)
         }
     }
-
-    fun formatDate(dateString: String): String {
-        return try {
-            val inputFormat = SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy", Locale.ENGLISH)
-            val outputFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
-            outputFormat.format(inputFormat.parse(dateString) ?: return dateString)
-        } catch (e: Exception) {
-            dateString
-        }
-    }
-
-
-    private fun normalizeDomain(input: String): String {
-        val clean = input
-            .replace("https://", "", ignoreCase = true)
-            .replace("http://", "", ignoreCase = true)
-            .trim()
-            .split("/")[0]
-
-        val host = clean.split(":")[0]
-
-        val regex = Regex("^[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
-        return if (regex.matches(host)) clean else ""
-    }
-
 }
