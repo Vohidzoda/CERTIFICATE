@@ -15,4 +15,5 @@ kotlin {
 dependencies {
     implementation("javax.inject:javax.inject:1")
     implementation(libs.androidx.annotation.jvm)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
 }

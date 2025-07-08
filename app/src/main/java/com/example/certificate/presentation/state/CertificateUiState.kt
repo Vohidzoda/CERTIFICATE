@@ -7,4 +7,6 @@ sealed class CertificateUiState {
     object Loading : CertificateUiState()
     data class Success(val data: SSLCertificateInfo) : CertificateUiState()
     data class Error(val message: String) : CertificateUiState()
+    data class Info(val message: String) : CertificateUiState()
+
 }

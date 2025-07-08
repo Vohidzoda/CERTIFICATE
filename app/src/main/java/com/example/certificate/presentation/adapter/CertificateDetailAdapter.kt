@@ -1,67 +1,66 @@
 package com.example.certificate.presentation.adapter
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.example.certificate.R
-import com.example.certificate.presentation.model.CertificateKeyDetail
+import com.example.domain.model.SSLCertificateEntry
 
 class CertificateDetailAdapter(
-    private var items: List<CertificateKeyDetail>
+    private val onCopyClick: (sha256: String) -> Unit
 ) : RecyclerView.Adapter<CertificateDetailAdapter.ViewHolder>() {
 
-    inner class ViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
-        private val titleTv: TextView = itemView.findViewById(R.id.textViewTitle)
-        private val valueTv: TextView = itemView.findViewById(R.id.textViewValue)
-        private val copyIv: ImageView = itemView.findViewById(R.id.ic_copy)
+    private var items: List<SSLCertificateEntry> = emptyList()
+
+    inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val titleCertificateTv: TextView = itemView.findViewById(R.id.textViewTitleCertificate)
+        private val valueCertificateTv: TextView = itemView.findViewById(R.id.textViewValueCertificate)
+        private val titlePublisherTv: TextView = itemView.findViewById(R.id.textViewTitlePublisher)
+        private val valuePublisherTv: TextView = itemView.findViewById(R.id.textViewValuePublisher)
+        private val titleSha256Tv: TextView = itemView.findViewById(R.id.textViewTitleSha256)
+        private val valueSha256Tv: TextView = itemView.findViewById(R.id.textViewValueSha256)
         private val startDateTv: TextView = itemView.findViewById(R.id.textViewStartDate)
         private val endDateTv: TextView = itemView.findViewById(R.id.textViewEndDate)
+        private val copyIv: ImageView = itemView.findViewById(R.id.ic_copy)
 
-        fun bind(item: CertificateKeyDetail) {
-            titleTv.text = item.title
-            valueTv.text = item.value
+        fun bind(item: SSLCertificateEntry) {
+            titleCertificateTv.text = itemView.context.getString(R.string.cert_subject_label)
+            titlePublisherTv.text = itemView.context.getString(R.string.cert_issuer_label)
+            titleSha256Tv.text = itemView.context.getString(R.string.cert_sha256_label)
 
-            if (item.startDate.isNotBlank()) {
+            valueCertificateTv.text = item.subject
+            valuePublisherTv.text = item.issuer
+            valueSha256Tv.text = item.sha256
+
+            if (item.validFrom.isNotBlank()) {
                 startDateTv.visibility = View.VISIBLE
-                startDateTv.text = itemView.context.getString(R.string.cert_valid_from, item.startDate)
+                startDateTv.text = itemView.context.getString(R.string.cert_valid_from, item.validFrom)
                 startDateTv.setTextColor(ContextCompat.getColor(itemView.context, R.color.start_date_color))
             } else {
                 startDateTv.visibility = View.GONE
             }
 
-            if (item.endDate.isNotBlank()) {
+            if (item.validTo.isNotBlank()) {
                 endDateTv.visibility = View.VISIBLE
-                endDateTv.text = itemView.context.getString(R.string.cert_valid_to, item.endDate)
+                endDateTv.text = itemView.context.getString(R.string.cert_valid_to, item.validTo)
                 endDateTv.setTextColor(ContextCompat.getColor(itemView.context, R.color.end_date_color))
             } else {
                 endDateTv.visibility = View.GONE
             }
 
             copyIv.setOnClickListener {
-                val clipboard = itemView.context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                val clipTitle = itemView.context.getString(R.string.label_clipboard_title)
-                val clip = ClipData.newPlainText(clipTitle, item.value)
-                clipboard.setPrimaryClip(clip)
-                val message = itemView.context.getString(R.string.copied_toast, item.value)
-                Toast.makeText(itemView.context, message, Toast.LENGTH_SHORT).show()
+                onCopyClick(item.sha256)
             }
         }
-
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_certificate_detail, parent, false)
-        return ViewHolder(view)
-    }
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
+        ViewHolder(LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_certificate_detail, parent, false))
 
     override fun getItemCount() = items.size
 
@@ -69,8 +68,9 @@ class CertificateDetailAdapter(
         holder.bind(items[position])
     }
 
-    fun updateData(newItems: List<CertificateKeyDetail>) {
+    fun updateData(newItems: List<SSLCertificateEntry>) {
         items = newItems
         notifyDataSetChanged()
     }
 }
+
