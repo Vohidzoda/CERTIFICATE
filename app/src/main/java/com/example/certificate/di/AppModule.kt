@@ -51,4 +51,19 @@ object AppModule {
         return NetworkObserverImpl(connectivityManager)
     }
 
+    @Provides
+    @Singleton
+    fun provideConnectivityManager(@ApplicationContext context: Context): ConnectivityManager {
+        return context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+
+    }
+
+    @Provides
+    @Singleton
+    fun provideNetworkObserver(
+        connectivityManager: ConnectivityManager
+    ): NetworkObserver {
+        return NetworkObserverImpl(connectivityManager)
+    }
+
 }
