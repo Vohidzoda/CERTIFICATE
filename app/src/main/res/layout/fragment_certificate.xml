@@ -17,24 +17,48 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/textInputLayout"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_weight="1"
-            android:layout_height="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
             android:layout_marginEnd="10dp"
             android:layout_marginStart="10dp"
-            app:endIconMode="clear_text"
-            app:prefixText="https://">
+            android:weightSum="1">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/editTextDomain"
-                android:layout_width="match_parent"
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/textInputLayoutDomain"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:hint="@string/url"
-                android:imeOptions="actionDone"
-                android:inputType="textUri"/>
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_weight="0.7"
+                app:endIconMode="clear_text"
+                app:prefixText="https://">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editTextDomain"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/enter_hostname"
+                    android:imeOptions="actionDone"
+                    android:inputType="textUri"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/textInputLayoutPort"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.3"
+                android:layout_marginStart="8dp">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editTextPort"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/port_number"
+                    android:imeOptions="actionDone"
+                    android:inputType="number"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+        </LinearLayout>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/getButton"

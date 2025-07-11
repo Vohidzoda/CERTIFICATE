@@ -14,19 +14,17 @@ import javax.net.ssl.SSLSocketFactory
 
 class CertificateRepositoryImpl : ICertificateRepository {
 
-    override suspend fun getSSLCertificate(domain: String): SSLCertificateInfo {
+    override suspend fun getSSLCertificate(domain: String, port: Int): SSLCertificateInfo {
         return withContext(Dispatchers.IO) {
-            val clean = domain
+            val cleanHost = domain
                 .replace("https://", "")
                 .replace("http://", "")
                 .trim()
                 .split("/")[0]
 
-            val (host, port) = parseHostAndPort(clean)
-
             val factory = SSLSocketFactory.getDefault() as SSLSocketFactory
             val socket = factory.createSocket() as SSLSocket
-            socket.connect(InetSocketAddress(host, port), 5000)
+            socket.connect(InetSocketAddress(cleanHost, port), 5000)
             socket.startHandshake()
 
             val certs = socket.session.peerCertificates
@@ -45,22 +43,9 @@ class CertificateRepositoryImpl : ICertificateRepository {
             socket.close()
 
             SSLCertificateInfo(
-                domain = host,
+                domain = cleanHost,
                 certificates = entries
             )
-        }
-    }
-
-
-
-    private fun parseHostAndPort(input: String): Pair<String, Int> {
-        val parts = input.split(":")
-        return if (parts.size == 2) {
-            val host = parts[0]
-            val port = parts[1].toIntOrNull() ?: 443
-            host to port
-        } else {
-            input to 443
         }
     }
 

@@ -11,9 +11,10 @@ import com.example.certificate.R
 import com.example.domain.model.SSLCertificateEntry
 
 class CertificateDetailAdapter(
-    private var items: List<SSLCertificateEntry>,
     private val onCopyClick: (sha256: String) -> Unit
 ) : RecyclerView.Adapter<CertificateDetailAdapter.ViewHolder>() {
+
+    private var items: List<SSLCertificateEntry> = emptyList()
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val titleCertificateTv: TextView = itemView.findViewById(R.id.textViewTitleCertificate)
@@ -57,11 +58,9 @@ class CertificateDetailAdapter(
         }
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_certificate_detail, parent, false)
-        return ViewHolder(view)
-    }
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
+        ViewHolder(LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_certificate_detail, parent, false))
 
     override fun getItemCount() = items.size
 

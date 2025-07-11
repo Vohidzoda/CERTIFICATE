@@ -3,13 +3,8 @@ package com.example.certificate.presentation.fragment
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.net.ConnectivityManager
-import android.net.Network
-import android.net.NetworkRequest
 import android.os.Bundle
 import android.view.View
-import android.view.inputmethod.EditorInfo
-import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.Toast
@@ -36,40 +31,34 @@ class CertificateFragment : Fragment(R.layout.fragment_certificate) {
     @Inject
     lateinit var shareHelper: ShareHelper
     private val viewModel: CertificateViewModel by viewModels()
-    private lateinit var connectivityManager: ConnectivityManager
-    private lateinit var networkCallback: ConnectivityManager.NetworkCallback
     private lateinit var recyclerView: RecyclerView
     private lateinit var adapter: CertificateDetailAdapter
     private lateinit var getButton: Button
     private lateinit var progressBar: ProgressBar
     private lateinit var editText: TextInputEditText
+    private lateinit var editTextPort: TextInputEditText
     private lateinit var shareButton: MaterialButton
 
-    private var isNetworkAvailable = true
-        set(value) {
-            field = value
-            requireActivity().runOnUiThread {
-                getButton.text = if (value) getString(R.string.button_get) else getString(R.string.button_retry)
-            }
-        }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        initViews(view)
+        setupRecyclerView()
+        setupButtons()
+        observeUiState()
+    }
+
+    private fun initViews(view: View){
         recyclerView = view.findViewById(R.id.certificateRecyclerView)
         getButton = view.findViewById(R.id.getButton)
         progressBar = view.findViewById(R.id.progressBar)
         editText = view.findViewById(R.id.editTextDomain)
+        editTextPort = view.findViewById(R.id.editTextPort)
         shareButton = view.findViewById(R.id.shareButton)
-
-        setupRecyclerView()
-        setupButtons()
-        observeUiState()
-        observeKeyboard()
-        observeNetwork()
     }
 
     private fun setupRecyclerView() {
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        adapter = CertificateDetailAdapter(emptyList()) { sha256 ->
+        adapter = CertificateDetailAdapter { sha256 ->
             copyToClipboard(sha256)
         }
         recyclerView.adapter = adapter
@@ -77,27 +66,19 @@ class CertificateFragment : Fragment(R.layout.fragment_certificate) {
 
     private fun setupButtons() {
         getButton.setOnClickListener {
-            val input = editText.text?.toString() ?: ""
+            val domain = editText.text?.toString()?.trim() ?: ""
+            val portText = editTextPort.text?.toString()?.trim() ?: "443"
+            val port = portText.toIntOrNull() ?: 443
 
-            if (isNetworkAvailable) {
-                viewModel.fetchCertificate(input)
-            } else {
-                Toast.makeText(requireContext(), getString(R.string.error_no_internet), Toast.LENGTH_SHORT).show()
-            }
+            viewModel.fetchCertificate(domain, port)
+
         }
 
         shareButton.setOnClickListener {
             shareCertificate()
         }
-
-        editText.setOnEditorActionListener { _, actionId, _ ->
-            if (actionId == EditorInfo.IME_ACTION_DONE) {
-                viewModel.onOkButtonClicked()
-                hideKeyboard()
-                true
-            } else false
-        }
     }
+
 
     private fun observeUiState() {
         lifecycleScope.launchWhenStarted {
@@ -106,59 +87,40 @@ class CertificateFragment : Fragment(R.layout.fragment_certificate) {
                     is CertificateUiState.Loading -> {
                         progressBar.isVisible = true
                         recyclerView.isVisible = false
+                        getButton.isEnabled = false
                     }
+
                     is CertificateUiState.Success -> {
                         progressBar.isVisible = false
                         recyclerView.isVisible = true
+                        getButton.isEnabled = true
+                        getButton.text = getString(R.string.button_get)
                         adapter.updateData(state.data.certificates)
                     }
+
                     is CertificateUiState.Error -> {
                         progressBar.isVisible = false
                         recyclerView.isVisible = false
+                        getButton.isEnabled = true
+                        getButton.text = getString(R.string.button_retry)
                         Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
                     }
+
+                    is CertificateUiState.Info -> {
+                        Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
+                    }
+
                     is CertificateUiState.Idle -> {
                         progressBar.isVisible = false
                         recyclerView.isVisible = false
+                        getButton.isEnabled = true
+                        getButton.text = getString(R.string.button_get)
                     }
                 }
             }
         }
     }
 
-    private fun observeKeyboard() {
-        lifecycleScope.launchWhenStarted {
-            viewModel.hideKeyboardEvent.collect {
-                hideKeyboard()
-            }
-        }
-    }
-
-    private fun observeNetwork() {
-        connectivityManager = requireContext().getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-
-        networkCallback = object : ConnectivityManager.NetworkCallback() {
-            override fun onLost(network: Network) {
-                isNetworkAvailable = false
-            }
-
-            override fun onAvailable(network: Network) {
-                isNetworkAvailable = true
-            }
-        }
-
-        isNetworkAvailable = connectivityManager.activeNetwork != null
-
-        val request = NetworkRequest.Builder().build()
-        connectivityManager.registerNetworkCallback(request, networkCallback)
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        if (::connectivityManager.isInitialized && ::networkCallback.isInitialized) {
-            connectivityManager.unregisterNetworkCallback(networkCallback)
-        }
-    }
 
     private fun shareCertificate() {
         val state = viewModel.uiState.value
@@ -167,12 +129,6 @@ class CertificateFragment : Fragment(R.layout.fragment_certificate) {
         } else {
             Toast.makeText(requireContext(), getString(R.string.no_data_to_share), Toast.LENGTH_SHORT).show()
         }
-    }
-
-    private fun hideKeyboard() {
-        val imm = requireContext().getSystemService(InputMethodManager::class.java)
-        val view = requireActivity().currentFocus ?: View(requireContext())
-        imm.hideSoftInputFromWindow(view.windowToken, 0)
     }
 
     private fun copyToClipboard(text: String) {

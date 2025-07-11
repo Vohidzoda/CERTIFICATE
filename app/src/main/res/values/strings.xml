@@ -1,9 +1,7 @@
 <resources>
     <string name="app_name">CERTIFICATE</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="error_invalid_domain">Введите корректный домен (например, google.com)</string>
-    <string name="error_no_internet">Нет подключения к интернету</string>
-    <string name="error_unknown">Неизвестная ошибка</string>
+
     <string name="button_get">Получить</string>
     <string name="button_retry">Повторить</string>
     <string name="share_certificate_title">Поделиться сертификатом</string>
@@ -42,6 +40,18 @@
     <string name="cert_sha256_label">🔑SHA-256:</string>
 
 
+    <string name="error_invalid_domain">Неверный домен</string>
+    <string name="error_no_internet">Нет подключения к интернету</string>
+    <string name="info_internet_restored">Интернет подключен</string>
+    <string name="error_domain_not_found">Домен не найден</string>
+    <string name="error_server_error">Ошибка сервера</string>
+    <string name="error_timeout">Время ожидания истекло</string>
+    <string name="error_unknown">Неизвестная ошибка</string>
+    <string name="error_connection_failed">Не удалось подключиться к серверу (проверьте порт)</string>
+
+
+
+
 
 
 
@@ -67,7 +77,8 @@
     <string name="endDate">End</string>
     <string name="url">URL</string>
     <string name="get">Получить</string>
-
+    <string name="enter_hostname">Домен</string>
+    <string name="port_number">Порт</string>
 
 
 </resources>
