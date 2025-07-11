@@ -39,7 +39,11 @@ class NetworkObserverImpl @Inject constructor(
             connectivityManager.unregisterNetworkCallback(callback)
         }
     }
-        .debounce(800)
+        .debounce(500)
+
+    override fun isCurrentlyAvailable(): Boolean {
+        return checkInternetAvailable()
+    }
 
     private fun checkInternetAvailable(): Boolean {
         val network = connectivityManager.activeNetwork ?: return false

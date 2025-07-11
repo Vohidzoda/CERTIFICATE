@@ -63,7 +63,7 @@ class CertificateViewModel @Inject constructor(
 
 
     fun fetchCertificate(input: String, port: Int) {
-        if (!hasInternet) {
+        if (!networkObserver.isCurrentlyAvailable()) {
             postError(R.string.error_no_internet)
             return
         }
@@ -109,7 +109,7 @@ class CertificateViewModel @Inject constructor(
     private fun handleError(e: Throwable) {
         val errorMessageRes = when (e) {
             is java.net.UnknownHostException -> R.string.error_invalid_domain
-            is java.net.ConnectException,
+            is java.net.ConnectException ,
             is java.net.SocketTimeoutException -> {
                 if (!hasInternet) {
                     R.string.error_no_internet
