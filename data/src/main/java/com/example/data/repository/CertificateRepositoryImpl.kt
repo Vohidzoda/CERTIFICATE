@@ -50,19 +50,6 @@ class CertificateRepositoryImpl : ICertificateRepository {
     }
 
 
-
-//    private fun parseHostAndPort(input: String): Pair<String, Int> {
-//        val parts = input.split(":")
-//        return if (parts.size == 2) {
-//            val host = parts[0]
-//            val port = parts[1].toIntOrNull() ?: 443
-//            host to port
-//        } else {
-//            input to 443
-//        }
-//    }
-
-
     private fun getCertificatePin(cert: X509Certificate): String {
         val md = MessageDigest.getInstance("SHA-256")
         val publicKey = cert.publicKey.encoded
